@@ -1,0 +1,40 @@
+# Nscale Fine-tuning Configuration
+
+# Model settings
+model:
+  # Meta-Llama-3.1-8B-Instruct (matches cookbook example)
+  base_model: "5b912da4-4a68-43eb-9224-38239535d934"
+
+# Training hyperparameters
+# Values match the PubMedQA cookbook example
+training:
+  batch_size: 32
+  learning_rate: 0.00001
+  num_epochs: 3
+  num_evaluations: 6
+  weight_decay: 0.03
+  warmup_ratio: 0
+  mask_prompt_labels: false
+  best_checkpoints: false
+
+# LoRA configuration
+# Values match the PubMedQA cookbook example
+lora:
+  enabled: true
+  alpha: 16
+  r: 8
+  dropout: 0
+  trainable_modules: []
+
+# Dataset configuration
+dataset:
+  prompt_column: "question"
+  answer_column: "answer"
+  train_file: "data/train.csv"
+  validation_file: "data/validation.csv"
+
+# API settings
+api:
+  fine_tuning_base_url: "https://fine-tuning.api.nscale.com/api/v1"
+  inference_base_url: "https://inference.api.nscale.com/v1"
+  timeout: 300

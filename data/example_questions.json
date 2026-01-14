@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What is the primary function of mitochondria in cells?",
+    "answer": "Mitochondria are the powerhouse of the cell, responsible for producing ATP through cellular respiration. They convert nutrients into energy that the cell can use."
+  },
+  {
+    "question": "What causes type 2 diabetes?",
+    "answer": "Type 2 diabetes is primarily caused by insulin resistance, where cells don't respond properly to insulin. Risk factors include obesity, lack of physical activity, genetics, and age."
+  },
+  {
+    "question": "How does the immune system respond to viral infections?",
+    "answer": "The immune system responds to viral infections through both innate and adaptive immunity. It produces antibodies, activates T-cells, and creates memory cells for future protection."
+  },
+  {
+    "question": "What is the role of DNA in protein synthesis?",
+    "answer": "DNA contains the genetic instructions for making proteins. Through transcription and translation, DNA sequences are converted to mRNA and then to amino acid sequences that form proteins."
+  },
+  {
+    "question": "What are the main symptoms of hypertension?",
+    "answer": "Hypertension often has no symptoms, which is why it's called a 'silent killer'. When symptoms occur, they may include headaches, shortness of breath, nosebleeds, or chest pain."
+  },
+  {
+    "question": "How does photosynthesis work?",
+    "answer": "Photosynthesis is the process by which plants convert light energy into chemical energy. It occurs in chloroplasts and uses carbon dioxide and water to produce glucose and oxygen."
+  },
+  {
+    "question": "What is the difference between bacteria and viruses?",
+    "answer": "Bacteria are living single-celled organisms that can reproduce on their own, while viruses are non-living particles that require a host cell to replicate. Antibiotics work against bacteria but not viruses."
+  },
+  {
+    "question": "What causes inflammation in the body?",
+    "answer": "Inflammation is the body's natural immune response to injury or infection. It's triggered by damaged cells releasing chemicals that cause blood vessels to leak fluid into tissues, resulting in swelling, redness, and heat."
+  },
+  {
+    "question": "How do vaccines work?",
+    "answer": "Vaccines work by introducing a weakened or inactive form of a pathogen to stimulate the immune system. This allows the body to develop immunity and memory cells without causing the disease."
+  },
+  {
+    "question": "What is the role of hemoglobin in blood?",
+    "answer": "Hemoglobin is a protein in red blood cells that binds to oxygen in the lungs and transports it throughout the body. It also helps carry carbon dioxide back to the lungs for exhalation."
+  }
+]
