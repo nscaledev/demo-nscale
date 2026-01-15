@@ -1,106 +1,101 @@
-# Nscale Setup Guide
+# Quick Setup Guide
 
 ## Prerequisites
 
 - Python 3.8+
-- Nscale API token
-- Nscale Organization ID
+- Nscale API token (get from [console.nscale.com/settings](https://console.nscale.com/settings))
 
-## Finding Your Credentials
-
-### 1. API Token
-
-Your API token is already configured in `.env`:
-```
-NSCALE_TOKEN=eyJhbGci...
-```
-
-### 2. Organization ID
-
-**Option A: Use the Helper Script (Recommended)**
+## Quick Start
 
 ```bash
-make get-org-id
-```
-
-This will attempt to fetch your organizations and help you configure the `.env` file.
-
-**Option B: Manual Configuration**
-
-1. Visit https://console.nscale.com/settings
-2. Find your "Organization ID" (looks like: `org-abc123xyz789`)
-3. Add it to `.env`:
-   ```
-   ORGANIZATION_ID=org-abc123xyz789
-   ```
-
-## API Endpoints
-
-This demo uses the correct Nscale API endpoints:
-
-- **Fine-tuning**: `https://fine-tuning.api.nscale.com/api/v1/organizations/{organization_id}`
-- **Inference**: `https://inference.api.nscale.com/v1`
-
-## Complete Setup Flow
-
-```bash
-# 1. Create virtual environment
+# 1. Setup environment
 make setup
-
-# 2. Install dependencies
 make install
 
-# 3. Configure organization ID
+# 2. Add your API token to .env
+echo "NSCALE_TOKEN=your_token_here" > .env
+
+# 3. Auto-fetch organization ID
 make get-org-id
 
 # 4. Create sample data
 make data
 
-# 5. Start fine-tuning
+# 5. Run fine-tuning
 make finetune-monitor
 ```
 
-## Troubleshooting
+## Step-by-Step Setup
 
-### "ORGANIZATION_ID not found" Error
+### 1. API Token
 
-Make sure your `.env` file has both:
-```
+Get your API token from: https://console.nscale.com/settings
+
+Add it to `.env`:
+```bash
 NSCALE_TOKEN=your_token_here
-ORGANIZATION_ID=your_org_id_here
 ```
 
-### "Failed to resolve 'api.nscale.com'" Error
+### 2. Organization ID (Automatic)
 
-This error is now fixed! The demo uses the correct endpoints:
-- Fine-tuning: `fine-tuning.api.nscale.com`
-- Inference: `inference.api.nscale.com`
-
-### Can't Fetch Organization ID Automatically
-
-The API endpoint for listing organizations may require different permissions.
-Use the manual method instead:
-1. Visit https://console.nscale.com/settings
-2. Copy your organization ID
-3. Run: `make get-org-id` and enter it manually
-
-## Quick Test
-
-Verify your setup:
+The organization ID is automatically fetched from the identity API:
 
 ```bash
-# Check .env file
+make get-org-id
+```
+
+This will:
+- Call the identity API at `https://identity.nks.europe-west4.nscale.com/api/v1/acl`
+- List all organizations associated with your token
+- Automatically select the first organization
+- Update `.env` with `ORGANIZATION_ID`
+
+**Example output:**
+```
+Fetching organizations from identity API...
+
+Found 2 organization(s):
+  1. abc-123-def-456
+     Projects: 5, Endpoints: 3
+  2. xyz-789-ghi-012
+     Projects: 2, Endpoints: 1
+
+Selecting organization: abc-123-def-456
+
+✓ .env file updated successfully!
+  ORGANIZATION_ID=abc-123-def-456
+```
+
+## Verify Setup
+
+```bash
+# Check credentials are configured
 cat .env
 
 # Should show:
 # NSCALE_TOKEN=...
 # ORGANIZATION_ID=...
+
+# Test inference (doesn't require org ID)
+python inference.py --list-models
 ```
 
-## Ready to Go!
+## Troubleshooting
 
-Once your `.env` is configured with both values, you're ready to start:
-
+**Missing Organization ID**
 ```bash
-make finetune-monitor
+make get-org-id
 ```
+
+**Python Module Errors**
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**File Not Found**
+```bash
+make data  # Create sample datasets
+```
+
+For more details, see [README.md](README.md).

@@ -1,4 +1,4 @@
-.PHONY: help setup install get-org-id clean data finetune finetune-monitor monitor inference interactive batch test status
+.PHONY: help setup install get-org-id clean data finetune finetune-monitor monitor inference interactive batch test test-suite test-inference status job-info
 
 # Default target
 help:
@@ -11,17 +11,21 @@ help:
 	@echo "  make get-org-id     - Get your Nscale organization ID"
 	@echo "  make data           - Create sample training/validation data"
 	@echo ""
+	@echo "Testing:"
+	@echo "  make test-suite     - Run pytest test suite"
+	@echo "  make test-inference - Test inference with a single question"
+	@echo ""
 	@echo "Fine-tuning:"
 	@echo "  make finetune       - Start fine-tuning job"
 	@echo "  make finetune-monitor - Start fine-tuning with monitoring"
 	@echo "  make monitor        - Monitor existing job (uses last_job_id.txt)"
 	@echo "  make status         - Check status of last job"
+	@echo "  make job-info       - Show detailed job info (uses last_job_id.txt)"
 	@echo ""
 	@echo "Inference:"
 	@echo "  make list-models    - List available inference endpoints"
 	@echo "  make inference      - Run interactive inference (requires MODEL env var)"
 	@echo "  make interactive    - Same as 'make inference'"
-	@echo "  make test           - Test inference with a single question"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean          - Remove generated files and cache"
@@ -95,6 +99,9 @@ status:
 		echo "No job ID found. Run 'make finetune' first."; \
 	fi
 
+job-info:
+	@. venv/bin/activate && python job_info.py
+
 # Inference commands
 list-models:
 	@echo "Fetching available inference endpoints..."
@@ -119,13 +126,18 @@ inference:
 
 interactive: inference
 
-test:
+# Testing commands
+test-suite:
+	@echo "Running pytest test suite..."
+	@. venv/bin/activate && pytest tests/ -v
+
+test-inference:
 	@echo "Testing inference with a sample question..."
 	@if [ -z "$$MODEL" ]; then \
 		echo "Error: MODEL environment variable not set."; \
 		echo ""; \
-		echo "Usage: MODEL=<model_id> make test"; \
-		echo "Example: MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct make test"; \
+		echo "Usage: MODEL=<model_id> make test-inference"; \
+		echo "Example: MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct make test-inference"; \
 		exit 1; \
 	else \
 		. venv/bin/activate && python inference.py \
