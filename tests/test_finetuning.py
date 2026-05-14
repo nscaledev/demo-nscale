@@ -468,3 +468,104 @@ class TestFineTuningBaseModels:
         )
         assert len(result) == 2
         assert result[0]["name"] == "Llama-3.1-8B"
+
+
+class TestFineTuningModelDownload:
+    """Test fine-tuned model download flows."""
+
+    def test_prepare_model_download(self):
+        """
+        Scenario: Prepare model download URL
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.get.return_value = {"download_url": "https://example.com/model.tar.gz"}
+        service = FineTuningService(mock_client)
+
+        # Act
+        result = service.prepare_model_download("job_123")
+
+        # Assert
+        mock_client.get.assert_called_once_with("jobs/job_123/download")
+        assert result["download_url"] == "https://example.com/model.tar.gz"
+
+    @patch("nscale.finetuning.requests.get")
+    def test_download_model_with_explicit_url(self, mock_get, tmp_path):
+        """
+        Scenario: Download model with explicit URL
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.session = Mock()
+        mock_client.session.headers = {"Authorization": "Bearer token"}
+        mock_client.timeout = 120
+
+        mock_response = Mock()
+        mock_response.iter_content.return_value = [b"tar", b"gz"]
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        service = FineTuningService(mock_client)
+        output_path = tmp_path / "model.tar.gz"
+
+        # Act
+        result = service.download_model(
+            job_id="job_123",
+            output_path=str(output_path),
+            download_url="https://example.com/model.tar.gz",
+            verbose=False,
+        )
+
+        # Assert
+        assert output_path.read_bytes() == b"targz"
+        assert result == str(output_path)
+
+    @patch("nscale.finetuning.requests.get")
+    def test_download_model_uses_prepare_endpoint(self, mock_get, tmp_path):
+        """
+        Scenario: Download model by first preparing URL
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.get.return_value = {"download_url": "https://example.com/model.tar.gz"}
+        mock_client.session = Mock()
+        mock_client.session.headers = {"Authorization": "Bearer token"}
+        mock_client.timeout = 120
+
+        mock_response = Mock()
+        mock_response.iter_content.return_value = [b"model"]
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        service = FineTuningService(mock_client)
+        output_path = tmp_path / "model.tar.gz"
+
+        # Act
+        result = service.download_model(
+            job_id="job_123",
+            output_path=str(output_path),
+            verbose=False,
+        )
+
+        # Assert
+        mock_client.get.assert_called_once_with("jobs/job_123/download")
+        assert output_path.read_bytes() == b"model"
+        assert result == str(output_path)
+
+    def test_download_model_raises_when_no_download_url(self, tmp_path):
+        """
+        Scenario: Download fails when prepare endpoint has no URL
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.get.return_value = {}
+        service = FineTuningService(mock_client)
+        output_path = tmp_path / "model.tar.gz"
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="Model download URL not found"):
+            service.download_model(
+                job_id="job_123",
+                output_path=str(output_path),
+                verbose=False,
+            )
