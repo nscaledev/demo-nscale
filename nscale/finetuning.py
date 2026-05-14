@@ -4,6 +4,7 @@ Fine-tuning service client for managing training jobs.
 
 import time
 import requests
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional, List
 from tqdm import tqdm
@@ -301,23 +302,24 @@ class FineTuningService(BaseService):
         if verbose:
             print(f"Downloading model for job {job_id}...")
 
-        headers = {
-            "Authorization": self.client.session.headers.get("Authorization", "")
-        }
-        response = requests.get(
+        # Reuse configured client session so retry policy applies to transient
+        # backend/storage errors during artifact download.
+        response = self.client.session.get(
             download_url,
-            headers=headers,
             stream=True,
             timeout=self.client.timeout,
         )
         response.raise_for_status()
 
-        with open(output_path, "wb") as f:
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output, "wb") as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
 
         if verbose:
-            print(f"✓ Model downloaded to: {output_path}")
+            print(f"✓ Model downloaded to: {output}")
 
-        return output_path
+        return str(output)

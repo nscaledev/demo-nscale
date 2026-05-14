@@ -489,8 +489,7 @@ class TestFineTuningModelDownload:
         mock_client.get.assert_called_once_with("jobs/job_123/download")
         assert result["download_url"] == "https://example.com/model.tar.gz"
 
-    @patch("nscale.finetuning.requests.get")
-    def test_download_model_with_explicit_url(self, mock_get, tmp_path):
+    def test_download_model_with_explicit_url(self, tmp_path):
         """
         Scenario: Download model with explicit URL
         """
@@ -503,7 +502,7 @@ class TestFineTuningModelDownload:
         mock_response = Mock()
         mock_response.iter_content.return_value = [b"tar", b"gz"]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_client.session.get.return_value = mock_response
 
         service = FineTuningService(mock_client)
         output_path = tmp_path / "model.tar.gz"
@@ -520,8 +519,7 @@ class TestFineTuningModelDownload:
         assert output_path.read_bytes() == b"targz"
         assert result == str(output_path)
 
-    @patch("nscale.finetuning.requests.get")
-    def test_download_model_uses_prepare_endpoint(self, mock_get, tmp_path):
+    def test_download_model_uses_prepare_endpoint(self, tmp_path):
         """
         Scenario: Download model by first preparing URL
         """
@@ -535,7 +533,7 @@ class TestFineTuningModelDownload:
         mock_response = Mock()
         mock_response.iter_content.return_value = [b"model"]
         mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+        mock_client.session.get.return_value = mock_response
 
         service = FineTuningService(mock_client)
         output_path = tmp_path / "model.tar.gz"
