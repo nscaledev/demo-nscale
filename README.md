@@ -263,6 +263,49 @@ print(answer)
 inf_client.close()
 ```
 
+### Download Datasets and Fine-Tuned Models
+
+If you need to export artifacts before the announced deprecation window closes
+(end of May 2026), you can use the helper methods below.
+
+```python
+from nscale import FineTuningClient
+
+with FineTuningClient(api_token=token, organization_id=org_id) as client:
+    # 1) Download model weights/config archive (.tar.gz)
+    # This calls jobs/{job_id}/download to get a download URL, then streams file bytes.
+    model_archive = client.jobs.download_model(
+        job_id="your-job-id",
+        output_path="exports/fine_tuned_model.tar.gz",
+    )
+    print("Model archive:", model_archive)
+
+    # 2) Download dataset source files
+    # Get dataset metadata to retrieve training/validation file IDs.
+    dataset = client.datasets.get("your-dataset-id")
+    train_file_id = dataset["training_file_id"]
+    val_file_id = dataset.get("validation_file_id")
+
+    # File metadata endpoint may include a download_url.
+    # If not present, pass an explicit URL via download_url=...
+    train_copy = client.files.download_file(
+        file_id=train_file_id,
+        output_path="exports/train.csv",
+    )
+    print("Training file:", train_copy)
+
+    if val_file_id:
+        val_copy = client.files.download_file(
+            file_id=val_file_id,
+            output_path="exports/validation.csv",
+        )
+        print("Validation file:", val_copy)
+```
+
+Notes:
+- `jobs.download_model()` uses the fine-tuning "prepare model download" flow and then downloads the artifact.
+- `files.download_file()` requires a usable `download_url` (from file metadata or passed explicitly).
+
 ### Error Handling
 
 ```python

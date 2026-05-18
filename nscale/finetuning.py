@@ -3,6 +3,8 @@ Fine-tuning service client for managing training jobs.
 """
 
 import time
+import requests
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional, List
 from tqdm import tqdm
@@ -248,3 +250,76 @@ class FineTuningService(BaseService):
         """
         result = self.client.get("base-models", params={"limit": limit})
         return result.get("data", [])
+
+    def prepare_model_download(self, job_id: str) -> Dict:
+        """
+        Prepare download for a completed fine-tuning job.
+
+        Args:
+            job_id: ID of the completed fine-tuning job
+
+        Returns:
+            Dictionary with download metadata (typically includes `download_url`)
+        """
+        return self.client.get(f"jobs/{job_id}/download")
+
+    def download_model(
+        self,
+        job_id: str,
+        output_path: str,
+        download_url: str = "",
+        chunk_size: int = 1024 * 1024,
+        verbose: bool = True,
+    ) -> str:
+        """
+        Download fine-tuned model archive to local disk.
+
+        Args:
+            job_id: Fine-tuning job ID
+            output_path: Destination path for `.tar.gz` archive
+            download_url: Optional direct download URL. If omitted, this method
+                calls `prepare_model_download(job_id)` to get one.
+            chunk_size: Stream chunk size in bytes
+            verbose: Whether to print progress messages
+
+        Returns:
+            Path to the downloaded archive
+
+        Raises:
+            ValueError: If no download URL is available
+            requests.HTTPError: If download request fails
+        """
+        if not download_url:
+            prepare_result = self.prepare_model_download(job_id)
+            download_url = prepare_result.get("download_url", "")
+
+        if not download_url:
+            raise ValueError(
+                "Model download URL not found in prepare response. "
+                "Pass `download_url` explicitly or verify API response."
+            )
+
+        if verbose:
+            print(f"Downloading model for job {job_id}...")
+
+        # Reuse configured client session so retry policy applies to transient
+        # backend/storage errors during artifact download.
+        response = self.client.session.get(
+            download_url,
+            stream=True,
+            timeout=self.client.timeout,
+        )
+        response.raise_for_status()
+
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output, "wb") as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+
+        if verbose:
+            print(f"✓ Model downloaded to: {output}")
+
+        return str(output)

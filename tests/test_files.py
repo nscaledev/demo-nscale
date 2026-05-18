@@ -206,3 +206,86 @@ class TestFileServiceOperations:
         # Assert
         mock_client.delete.assert_called_once_with(f"files/{file_id}")
         assert result["status"] == "deleted"
+
+    @patch("nscale.files.requests.get")
+    def test_download_file_with_explicit_url(self, mock_get, tmp_path):
+        """
+        Scenario: Download file with explicit URL
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.session = Mock()
+        mock_client.session.headers = {"Authorization": "Bearer token"}
+        mock_client.timeout = 120
+
+        mock_response = Mock()
+        mock_response.iter_content.return_value = [b"abc", b"123"]
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        file_service = FileService(mock_client)
+        output_path = tmp_path / "downloaded.csv"
+
+        # Act
+        result = file_service.download_file(
+            file_id="file_1",
+            output_path=str(output_path),
+            download_url="https://example.com/file.csv",
+            verbose=False,
+        )
+
+        # Assert
+        mock_get.assert_called_once()
+        assert output_path.read_bytes() == b"abc123"
+        assert result == str(output_path)
+
+    @patch("nscale.files.requests.get")
+    def test_download_file_uses_metadata_download_url(self, mock_get, tmp_path):
+        """
+        Scenario: Download file using URL from file metadata
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.session = Mock()
+        mock_client.session.headers = {"Authorization": "Bearer token"}
+        mock_client.timeout = 120
+        mock_client.get.return_value = {"id": "file_1", "download_url": "https://example.com/file.csv"}
+
+        mock_response = Mock()
+        mock_response.iter_content.return_value = [b"hello"]
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        file_service = FileService(mock_client)
+        output_path = tmp_path / "downloaded.csv"
+
+        # Act
+        result = file_service.download_file(
+            file_id="file_1",
+            output_path=str(output_path),
+            verbose=False,
+        )
+
+        # Assert
+        mock_client.get.assert_called_once_with("files/file_1")
+        assert output_path.read_bytes() == b"hello"
+        assert result == str(output_path)
+
+    def test_download_file_raises_when_no_download_url(self, tmp_path):
+        """
+        Scenario: Download fails when no URL is available
+        """
+        # Arrange
+        mock_client = Mock(spec=NscaleClient)
+        mock_client.get.return_value = {"id": "file_1", "name": "train.csv"}
+
+        file_service = FileService(mock_client)
+        output_path = tmp_path / "downloaded.csv"
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="No download URL available"):
+            file_service.download_file(
+                file_id="file_1",
+                output_path=str(output_path),
+                verbose=False,
+            )
